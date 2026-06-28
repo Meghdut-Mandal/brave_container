@@ -14,4 +14,8 @@ ${BIN} \
   --password-store=basic \
   --start-maximized \
   --user-data-dir="${USER_DATA_DIR}" \
+  --renderer-process-limit=2 \
+  --disable-gpu \
+  --disable-software-rasterizer \
+  --js-flags="--max-old-space-size=512" \
    "$@" > /dev/null 2>&1
