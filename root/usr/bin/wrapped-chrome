@@ -19,7 +19,6 @@ ${BIN} \
   --disable-software-rasterizer \
   --js-flags="--max-old-space-size=512" \
   --enable-low-end-device-mode \
-  --disable-extensions \
   --disable-background-networking \
   --disable-sync \
   --disable-default-apps \
