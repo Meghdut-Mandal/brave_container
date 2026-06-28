@@ -6,7 +6,7 @@ It provides an isolated browsing environment accessible via a web browser using 
 
 ## Key Features
 
-- **Brave Browser (ARM64)**: Uses the official Brave APT repository for native aarch64 performance, replacing standard Chromium.
+- **Brave Browser (ARM64)**: Uses the official Brave APT repository for native aarch64 performance, replacing standard Chromium or Google Chrome.
 - **Cloudflare WARP Integration**: Traffic inside the container is automatically routed through a Cloudflare WARP VPN tunnel.
 - **Background Daemon Management**: The WARP daemon is managed natively by `s6-overlay`, ensuring reliable background execution and automatic restarts.
 - **Web-Based Access**: The browser interface is streamed directly to a web browser on your host machine via a secure HTML5 client.
@@ -23,7 +23,10 @@ docker compose up -d --build
 ### 2. Access the Browser
 
 Open your local browser and navigate to:
-**https://localhost:6969**
+- **Primary Web UI**: [https://localhost:6969](https://localhost:6969)
+- **Alternative Web UI**: [https://localhost:6970](https://localhost:6970)
+
+> **Note:** The container uses a self-signed HTTPS certificate. Your browser will show a security warning — accept it to proceed.
 
 ### 3. Initialize the VPN
 
@@ -37,10 +40,39 @@ docker exec brave setup-warp
 
 ## Configuration
 
-- **Ports:** The default web interface is exposed on port `6969`.
-- **Volumes:** 
-  - `./config`: Persists your Brave Browser profile data and settings.
-  - `warp_data`: A Docker volume that persists your WARP registration status across container restarts.
+### Ports
+
+The host port mappings have been updated to avoid conflicts:
+
+| Host Port | Container Port | Protocol | Description |
+|---|---|---|---|
+| `6969` | `3000` | HTTPS | Primary HTTPS Web UI |
+| `6970` | `3001` | HTTPS | Alternative HTTPS Web UI |
+
+### Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `PUID` | `1000` | User ID for file permissions |
+| `PGID` | `1000` | Group ID for file permissions |
+| `TZ` | `Asia/Kolkata` | Timezone |
+| `CUSTOM_USER` | *(unset)* | Username for basic HTTP auth |
+| `PASSWORD` | *(unset)* | Password for basic HTTP auth |
+| `CHROME_CLI` | *(unset)* | Additional CLI flags or starting URL passed to Brave |
+| `NO_DECOR` | `true` | Set to `true` to hide window decorations/title bar (optimized for vertical tabs) |
+| `PIXELFLUX_WAYLAND` | `true` | Set to `false` to force X11 fallback |
+
+### Volumes
+
+- `./config`: Persists your Brave Browser profile data and settings.
+- `warp_data`: A Docker volume that persists your WARP registration status across container restarts.
+
+## Security & Privileges
+
+To support GUI applications and VPN tunnel routing, the container requires the following options in `docker-compose.yml`:
+- `security_opt: - seccomp=unconfined` (Required for GUI app syscall compatibility)
+- `cap_add: - NET_ADMIN` (Required for Cloudflare WARP VPN to manage interfaces)
+- `devices: - /dev/net/tun:/dev/net/tun` (Exposes the tun device to the container)
 
 ## Notes
 - To completely reset your browser, delete the `config` directory on your host.
