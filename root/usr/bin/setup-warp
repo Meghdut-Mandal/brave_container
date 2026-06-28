@@ -1,0 +1,55 @@
+#!/bin/bash
+# ============================================================
+# Cloudflare WARP Setup Script
+# Run this inside the container to initialize and connect WARP.
+# ============================================================
+
+set -e
+
+echo "=== Cloudflare WARP Setup ==="
+echo ""
+
+# Wait for the warp-svc daemon to be ready (managed by s6-overlay)
+echo "[1/4] Waiting for WARP service daemon to be ready..."
+for i in {1..10}; do
+  if warp-cli --accept-tos status >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
+
+# Check registration status
+REG_STATUS=$(warp-cli --accept-tos registration show 2>&1 || true)
+if echo "$REG_STATUS" | grep -q "Missing registration"; then
+  echo "[2/4] Registering with Cloudflare (accepting TOS)..."
+  warp-cli --accept-tos registration new
+  echo "       Registration complete."
+else
+  echo "[2/4] Already registered with Cloudflare."
+fi
+
+# Set mode to warp (full VPN tunnel)
+echo "[3/4] Setting WARP mode..."
+warp-cli --accept-tos mode warp
+
+# Connect
+echo "[4/4] Connecting to Cloudflare WARP..."
+warp-cli --accept-tos connect
+
+sleep 2
+
+# Verify
+echo ""
+echo "=== Connection Status ==="
+warp-cli --accept-tos status
+echo ""
+echo "=== Verifying WARP tunnel ==="
+curl -s https://www.cloudflare.com/cdn-cgi/trace | grep -E "warp=|ip="
+echo ""
+echo "✅ WARP setup complete! Your traffic is now routed through Cloudflare."
+echo ""
+echo "Useful commands:"
+echo "  warp-cli --accept-tos status      — Check connection status"
+echo "  warp-cli --accept-tos disconnect  — Disconnect from WARP"
+echo "  warp-cli --accept-tos connect     — Reconnect to WARP"
+echo "  warp-cli --accept-tos mode proxy  — Switch to SOCKS5 proxy mode (localhost:40000)"
