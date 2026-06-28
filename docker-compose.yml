@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: local/brave-arm64:latest
+    image: local/brave:latest
     container_name: brave
     # Required for GUI app syscall compatibility
     security_opt:

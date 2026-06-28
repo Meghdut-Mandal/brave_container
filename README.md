@@ -1,12 +1,12 @@
-# ARM64 Dockerized Brave Browser with Cloudflare WARP
+# Multi-Platform Dockerized Brave Browser with Cloudflare WARP
 
-This repository contains a fully configured Docker environment for running the **Brave Browser** seamlessly on ARM64 (Apple Silicon / aarch64 Linux) architectures. 
+This repository contains a fully configured Docker environment for running the **Brave Browser** seamlessly on both **ARM64** (Apple Silicon / aarch64) and **AMD64** (x86_64) architectures. 
 
 It provides an isolated browsing environment accessible via a web browser using WebRTC (Selkies/KasmVNC), completely routed through a Cloudflare WARP VPN tunnel.
 
 ## Key Features
 
-- **Brave Browser (ARM64)**: Uses the official Brave APT repository for native aarch64 performance, replacing standard Chromium or Google Chrome.
+- **Brave Browser (Multi-Platform)**: Automatically installs the native Brave browser package matching the host architecture (ARM64 or AMD64).
 - **Cloudflare WARP Integration**: Traffic inside the container is automatically routed through a Cloudflare WARP VPN tunnel.
 - **Background Daemon Management**: The WARP daemon is managed natively by `s6-overlay`, ensuring reliable background execution and automatic restarts.
 - **Web-Based Access**: The browser interface is streamed directly to a web browser on your host machine via a secure HTML5 client.
