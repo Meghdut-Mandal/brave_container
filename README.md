@@ -1,87 +1,47 @@
-# Chromium ARM64 Docker Image
+# ARM64 Dockerized Brave Browser with Cloudflare WARP
 
-Web-accessible Chromium browser inside a Debian container, adapted from [linuxserver/docker-chrome](https://github.com/linuxserver/docker-chrome) for **ARM64 / Apple Silicon (macOS)**.
+This repository contains a fully configured Docker environment for running the **Brave Browser** seamlessly on ARM64 (Apple Silicon / aarch64 Linux) architectures. 
 
-## Why Chromium Instead of Chrome?
+It provides an isolated browsing environment accessible via a web browser using WebRTC (Selkies/KasmVNC), completely routed through a Cloudflare WARP VPN tunnel.
 
-Google Chrome only provides Linux packages for `amd64` (x86-64). This image uses **Chromium** — the open-source project Chrome is built on — which has native ARM64 packages available in Debian repositories.
+## Key Features
 
-## Architecture
+- **Brave Browser (ARM64)**: Uses the official Brave APT repository for native aarch64 performance, replacing standard Chromium.
+- **Cloudflare WARP Integration**: Traffic inside the container is automatically routed through a Cloudflare WARP VPN tunnel.
+- **Background Daemon Management**: The WARP daemon is managed natively by `s6-overlay`, ensuring reliable background execution and automatic restarts.
+- **Web-Based Access**: The browser interface is streamed directly to a web browser on your host machine via a secure HTML5 client.
+- **Vertical Tabs Optimized**: The Wayland window manager (`labwc`) has been configured with `NO_DECOR=true` to completely hide the top system title bar, providing maximum screen real estate for vertical tab workflows.
 
-This image is built on top of [`ghcr.io/linuxserver/baseimage-selkies:debiantrixie`](https://github.com/linuxserver/docker-baseimage-selkies) which provides:
+## Setup & Usage
 
-- **Selkies** — WebRTC-based remote desktop streaming (low-latency, 60+ FPS)
-- **Wayland compositor** (Labwc) with X11 fallback
-- **NGINX** for web serving and basic auth
-- **PulseAudio** for audio capture
-- **s6 overlay** for process supervision
-
-## Quick Start
-
-### Build & Run with Docker Compose (Recommended)
+### 1. Build and Start the Container
 
 ```bash
 docker compose up -d --build
 ```
 
-Then open your browser to: **https://localhost:3001/**
+### 2. Access the Browser
 
-> **Note:** The container uses a self-signed HTTPS certificate. Your browser will show a security warning — accept it to proceed.
+Open your local browser and navigate to:
+**https://localhost:6969**
 
-### Build & Run with Docker CLI
+### 3. Initialize the VPN
+
+On the first run, execute the setup script to register and connect the Cloudflare WARP tunnel:
 
 ```bash
-# Build the image
-docker build -t chromium-arm64 .
-
-# Run the container
-docker run -d \
-  --name chromium \
-  --security-opt seccomp=unconfined \
-  -e PUID=1000 \
-  -e PGID=1000 \
-  -e TZ=Asia/Kolkata \
-  -v $(pwd)/config:/config \
-  -p 3000:3000 \
-  -p 3001:3001 \
-  --shm-size="1gb" \
-  chromium-arm64
+docker exec brave setup-warp
 ```
 
-## Environment Variables
+*(You can verify the connection status at any time by running `docker exec brave warp-cli --accept-tos status`)*
 
-| Variable | Default | Description |
-|---|---|---|
-| `PUID` | `1000` | User ID for file permissions |
-| `PGID` | `1000` | Group ID for file permissions |
-| `TZ` | `Etc/UTC` | Timezone |
-| `CUSTOM_USER` | *(unset)* | Username for basic HTTP auth |
-| `PASSWORD` | *(unset)* | Password for basic HTTP auth |
-| `CHROME_CLI` | *(unset)* | Additional CLI flags/URL passed to Chromium |
-| `PIXELFLUX_WAYLAND` | `true` | Set to `false` to force X11 fallback |
+## Configuration
 
-## Ports
+- **Ports:** The default web interface is exposed on port `6969`.
+- **Volumes:** 
+  - `./config`: Persists your Brave Browser profile data and settings.
+  - `warp_data`: A Docker volume that persists your WARP registration status across container restarts.
 
-| Port | Protocol | Description |
-|---|---|---|
-| `3000` | HTTPS | Web UI |
-| `3001` | HTTPS | Web UI (alternative) |
-
-## Security
-
-> ⚠️ **Warning:** This container provides privileged access to the host system. Do not expose it to the Internet without proper security.
-
-- HTTPS is required for full functionality (WebCodecs, audio, etc.)
-- By default there is no authentication — set `CUSTOM_USER` and `PASSWORD` for basic auth
-- For internet exposure, place behind a reverse proxy with robust authentication
-- The web UI includes a terminal with passwordless `sudo` access
-
-## Volumes
-
-| Path | Description |
-|---|---|
-| `/config` | Persistent configuration and user data |
-
-## Credits
-
-Based on [linuxserver/docker-chrome](https://github.com/linuxserver/docker-chrome) by the [LinuxServer.io](https://linuxserver.io) team.
+## Notes
+- To completely reset your browser, delete the `config` directory on your host.
+- The repository includes a `.gitignore` to prevent committing your personal `config/` data.
